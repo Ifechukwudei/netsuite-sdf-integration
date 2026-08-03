@@ -28,33 +28,19 @@ jobs:
       - name: Install Dependencies
         run: npm ci --acceptsuitecloudsdklicense || npm install --acceptsuitecloudsdklicense
 
-      - name: Prepare Demo Environment Secrets
-        run: |
-          if [ -z "${{ secrets.NS_ACCOUNT }}" ] || [ -z "${{ secrets.NS_TOKEN_ID }}" ] || [ -z "${{ secrets.NS_TOKEN_SECRET }}" ] || [ -z "${{ secrets.NS_CONSUMER_KEY }}" ] || [ -z "${{ secrets.NS_CONSUMER_SECRET }}" ]; then
-            echo "::error::One or more NetSuite secrets are missing in GitHub repository settings."
-            exit 1
-          fi
-
-          # Resolve Auth ID
-          RAW_ID="${{ secrets.NS_AUTH_ID }}"
-          CLEAN_ID=$(echo "${RAW_ID}" | tr -cd 'a-zA-Z0-9_-')
-          if [ -z "${CLEAN_ID}" ]; then
-            CLEAN_ID="DemoDeployer"
-          fi
-          echo "NS_AUTH_ID=${CLEAN_ID}" >> $GITHUB_ENV
-
-          # Preserve Demo Account ID Formatting (Uppercase and converts hyphens to underscores e.g., 123456-td1 -> 123456_TD1)
-          DEMO_ACCOUNT=$(echo "${{ secrets.NS_ACCOUNT }}" | tr '-' '_' | tr 'a-z' 'A-Z')
-          echo "NS_ACCOUNT=${DEMO_ACCOUNT}" >> $GITHUB_ENV
-
+      # =========================================================================
+      # YOUR STEP IS PLACED HERE (AFTER DEPENDENCIES, BEFORE PROJECT CONFIG)
+      # =========================================================================
       - name: Save NetSuite Authentication Token
         env:
+          NS_ACCOUNT: ${{ secrets.NS_ACCOUNT }}
+          NS_AUTH_ID: ${{ secrets.NS_AUTH_ID || 'DemoDeployer' }}
           NS_TOKEN_ID: ${{ secrets.NS_TOKEN_ID }}
           NS_TOKEN_SECRET: ${{ secrets.NS_TOKEN_SECRET }}
           NS_CONSUMER_KEY: ${{ secrets.NS_CONSUMER_KEY }}
           NS_CONSUMER_SECRET: ${{ secrets.NS_CONSUMER_SECRET }}
         run: |
-          echo "Authenticating against Demo Account: ${NS_ACCOUNT}..."
+          echo "Saving token for account: ${NS_ACCOUNT} with Auth ID: ${NS_AUTH_ID}..."
           npx suitecloud account:savetoken \
             --account "${NS_ACCOUNT}" \
             --authid "${NS_AUTH_ID}" \
@@ -70,11 +56,11 @@ jobs:
             const file = "./project.json";
             if (fs.existsSync(file)) {
               const p = JSON.parse(fs.readFileSync(file, "utf8"));
-              p.defaultAuthId = process.env.NS_AUTH_ID;
+              p.defaultAuthId = process.env.NS_AUTH_ID || "DemoDeployer";
               fs.writeFileSync(file, JSON.stringify(p, null, 2));
-              console.log("Successfully set defaultAuthId to:", process.env.NS_AUTH_ID);
+              console.log("Successfully set defaultAuthId in project.json");
             } else {
-              console.error("project.json missing in root directory!");
+              console.error("project.json not found in root!");
               process.exit(1);
             }
           '
