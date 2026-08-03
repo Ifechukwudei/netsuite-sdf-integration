@@ -10,7 +10,7 @@ on:
 
 env:
   SUITECLOUD_CI: 'true'
-  SUITECLOUD_CI_PASSKEY: ${{ secrets.SUITECLOUD_CI_PASSKEY || '0123456789abcdef0123456789abcdef' }}
+  SUITECLOUD_CI_PASSKEY: ${{ secrets.SUITECLOUD_CI_PASSKEY }}
 
 jobs:
   build-and-deploy:
