@@ -85,8 +85,10 @@ To enable automated deployment via GitHub Actions, configure the following 6 sec
 
 ### 1. Install Dependencies
 ```bash
-npm install
+npm install --acceptsuitecloudsdklicense
 ```
+> **Note for CI / Global Installation**: When installing in automated CI pipelines or globally (`npm install -g @oracle/suitecloud-cli`), append `--acceptsuitecloudsdklicense` to accept Oracle's Free Use Terms and Conditions license non-interactively.
+
 
 ### 2. Save Token Credential Locally (`npm run setup`)
 Run the interactive or non-interactive token save command:
