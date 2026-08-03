@@ -53,10 +53,26 @@ jobs:
             --consumerkey "${NS_CONSUMER_KEY}" \
             --consumersecret "${NS_CONSUMER_SECRET}"
 
+      - name: Bind Auth ID to Project Config
+        run: |
+          node -e '
+            const fs = require("fs");
+            const file = "./project.json";
+            if (fs.existsSync(file)) {
+              const p = JSON.parse(fs.readFileSync(file, "utf8"));
+              p.defaultAuthId = process.env.NS_AUTH_ID;
+              fs.writeFileSync(file, JSON.stringify(p, null, 2));
+              console.log("Updated project.json defaultAuthId to:", process.env.NS_AUTH_ID);
+            } else {
+              console.error("project.json not found in root directory!");
+              process.exit(1);
+            }
+          '
+
       - name: Validate SDF Project
         if: github.event_name == 'pull_request'
-        run: npx suitecloud project:validate --authid "${NS_AUTH_ID}"
+        run: npx suitecloud project:validate
 
       - name: Deploy SDF Project
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: npx suitecloud project:deploy --authid "${NS_AUTH_ID}"
+        run: npx suitecloud project:deploy
