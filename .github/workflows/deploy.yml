@@ -23,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24.x'
+          node-version: '20.x'
 
       - name: Install Dependencies
         run: npm ci --acceptsuitecloudsdklicense || npm install --acceptsuitecloudsdklicense
@@ -36,51 +36,13 @@ jobs:
           NS_CONSUMER_KEY: ${{ secrets.NS_CONSUMER_KEY }}
           NS_CONSUMER_SECRET: ${{ secrets.NS_CONSUMER_SECRET }}
         run: |
-          # Determine auth id (fallback to DemoDeployer if secret is missing)
-          NS_AUTH_ID="${{ secrets.NS_AUTH_ID }}"
-          if [ -z "$NS_AUTH_ID" ]; then
-            NS_AUTH_ID="DemoDeployer"
-          fi
-          echo "Using NS_AUTH_ID=$NS_AUTH_ID"
-
-          # Save token (fail on error)
-          set -o pipefail
           npx suitecloud account:savetoken \
             --account "${NS_ACCOUNT}" \
-            --authid "${NS_AUTH_ID}" \
+            --authid "default" \
             --tokenid "${NS_TOKEN_ID}" \
             --tokensecret "${NS_TOKEN_SECRET}" \
             --consumerkey "${NS_CONSUMER_KEY}" \
             --consumersecret "${NS_CONSUMER_SECRET}"
-          
-          echo "savetoken returned: $?"
-
-          # Verify the saved auth exists (list saved accounts)
-          echo "Saved accounts:"
-          npx suitecloud account:list || true
-
-      - name: Bind Auth ID to project.json
-        run: |
-          NS_AUTH_ID="${{ secrets.NS_AUTH_ID }}"
-          if [ -z "$NS_AUTH_ID" ]; then
-            NS_AUTH_ID="DemoDeployer"
-          fi
-          echo "Binding defaultAuthId=${NS_AUTH_ID} in project.json"
-
-          node -e '
-            const fs = require("fs");
-            const file = "./project.json";
-            if (fs.existsSync(file)) {
-              const p = JSON.parse(fs.readFileSync(file, "utf8"));
-              // Read fallback from process.argv[1] to avoid masking/scoping issues in logs
-              p.defaultAuthId = process.argv[1];
-              fs.writeFileSync(file, JSON.stringify(p, null, 2));
-              console.log("Successfully set defaultAuthId in project.json");
-            } else {
-              console.error("project.json not found in root!");
-              process.exit(1);
-            }
-          ' "$NS_AUTH_ID"
 
       - name: Validate SDF Project
         if: github.event_name == 'pull_request'
