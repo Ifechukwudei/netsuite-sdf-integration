@@ -37,9 +37,11 @@ jobs:
           NS_CONSUMER_KEY: ${{ secrets.NS_CONSUMER_KEY }}
           NS_CONSUMER_SECRET: ${{ secrets.NS_CONSUMER_SECRET }}
         run: |
+          export AUTH_ID="${NS_AUTH_ID:-default}"
+          node -e "const p = require('./project.json'); p.defaultAuthId = process.env.AUTH_ID; require('fs').writeFileSync('./project.json', JSON.stringify(p, null, 2));"
           npx suitecloud account:savetoken \
             --account "${NS_ACCOUNT}" \
-            --authid "${NS_AUTH_ID}" \
+            --authid "${AUTH_ID}" \
             --tokenid "${NS_TOKEN_ID}" \
             --tokensecret "${NS_TOKEN_SECRET}" \
             --consumerkey "${NS_CONSUMER_KEY}" \
