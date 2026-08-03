@@ -9,8 +9,7 @@ on:
       - main
 
 env:
-  SUITECLOUD_CI: '1'
-  SUITECLOUD_CI_PASSKEY: '0123456789abcdef0123456789abcdef'
+  SUITECLOUD_FALLBACK_PASSKEY: '0123456789abcdef0123456789abcdef'
 
 jobs:
   build-and-deploy:
