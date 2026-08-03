@@ -21,10 +21,8 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: Accept License and Install SuiteCloud CLI
-        run: |
-          npm config set acceptsuitecloudsdklicense true
-          npm install -g @oracle/suitecloud-cli
+      - name: Install SuiteCloud CLI
+        run: npm install -g @oracle/suitecloud-cli -- --acceptsuitecloudsdklicense
 
       - name: Save NetSuite Authentication Token
         env:
