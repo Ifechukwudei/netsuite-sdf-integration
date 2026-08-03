@@ -1,0 +1,50 @@
+name: NetSuite SDF CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Save NetSuite Authentication Token
+        env:
+          NS_ACCOUNT: ${{ secrets.NS_ACCOUNT }}
+          NS_AUTH_ID: ${{ secrets.NS_AUTH_ID }}
+          NS_TOKEN_ID: ${{ secrets.NS_TOKEN_ID }}
+          NS_TOKEN_SECRET: ${{ secrets.NS_TOKEN_SECRET }}
+          NS_CONSUMER_KEY: ${{ secrets.NS_CONSUMER_KEY }}
+          NS_CONSUMER_SECRET: ${{ secrets.NS_CONSUMER_SECRET }}
+        run: |
+          npx suitecloud account:savetoken \
+            --account "${NS_ACCOUNT}" \
+            --authid "${NS_AUTH_ID}" \
+            --tokenid "${NS_TOKEN_ID}" \
+            --tokensecret "${NS_TOKEN_SECRET}" \
+            --consumerkey "${NS_CONSUMER_KEY}" \
+            --consumersecret "${NS_CONSUMER_SECRET}"
+
+      - name: Validate SDF Project
+        if: github.event_name == 'pull_request'
+        run: npx suitecloud project:validate --authid ${{ secrets.NS_AUTH_ID }}
+
+      - name: Deploy SDF Project
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npx suitecloud project:deploy --authid ${{ secrets.NS_AUTH_ID }}

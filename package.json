@@ -1,0 +1,13 @@
+{
+  "name": "my-netsuite-sdf-project",
+  "version": "1.0.0",
+  "description": "NetSuite SuiteCloud Development Framework (SDF) project with GitHub Actions CI/CD pipeline",
+  "scripts": {
+    "setup": "suitecloud account:savetoken",
+    "validate": "suitecloud project:validate",
+    "deploy": "suitecloud project:deploy"
+  },
+  "devDependencies": {
+    "@oracle/suitecloud-cli": "^3.2.0"
+  }
+}

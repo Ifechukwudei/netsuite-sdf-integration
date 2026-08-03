@@ -1,0 +1,9 @@
+<usereventscript scriptid="customscript_ue_sample">
+    <description>Sample User Event 2.1 Script</description>
+    <isinactive>F</isinactive>
+    <name>Sample User Event Script</name>
+    <notifyadmins>F</notifyadmins>
+    <notifyowner>T</notifyowner>
+    <scriptfile>[/SuiteScripts/custom_ue_sample.js]</scriptfile>
+    <beforesubmitfunction>beforeSubmit</beforesubmitfunction>
+</usereventscript>

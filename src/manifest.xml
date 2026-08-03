@@ -1,0 +1,10 @@
+<manifest projecttype="ACCOUNTCUSTOMIZATION">
+    <projectname>my-netsuite-sdf-project</projectname>
+    <projectversion>1.0.0</projectversion>
+    <frameworkversion>1.0</frameworkversion>
+    <dependencies>
+        <features>
+            <feature required="true">SERVERSUITESCRIPT</feature>
+        </features>
+    </dependencies>
+</manifest>
