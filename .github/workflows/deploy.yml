@@ -9,7 +9,8 @@ on:
       - main
 
 env:
-  SUITECLOUD_FALLBACK_PASSKEY: '0123456789abcdef0123456789abcdef'
+  SUITECLOUD_CI: 'true'
+  SUITECLOUD_CI_PASSKEY: ${{ secrets.SUITECLOUD_CI_PASSKEY || '0123456789abcdef0123456789abcdef' }}
 
 jobs:
   build-and-deploy:
@@ -27,25 +28,26 @@ jobs:
       - name: Install Dependencies
         run: npm ci --acceptsuitecloudsdklicense || npm install --acceptsuitecloudsdklicense
 
+      - name: Resolve Auth ID
+        run: |
+          RAW_ID="${{ secrets.NS_AUTH_ID }}"
+          CLEAN_ID=$(echo "${RAW_ID}" | tr -cd 'a-zA-Z0-9_-')
+          if [ -z "${CLEAN_ID}" ]; then
+            CLEAN_ID="default"
+          fi
+          echo "NS_AUTH_ID=${CLEAN_ID}" >> $GITHUB_ENV
+
       - name: Save NetSuite Authentication Token
         env:
           NS_ACCOUNT: ${{ secrets.NS_ACCOUNT }}
-          NS_AUTH_ID: ${{ secrets.NS_AUTH_ID }}
           NS_TOKEN_ID: ${{ secrets.NS_TOKEN_ID }}
           NS_TOKEN_SECRET: ${{ secrets.NS_TOKEN_SECRET }}
           NS_CONSUMER_KEY: ${{ secrets.NS_CONSUMER_KEY }}
           NS_CONSUMER_SECRET: ${{ secrets.NS_CONSUMER_SECRET }}
         run: |
-          RAW_AUTH_ID=$(echo "${NS_AUTH_ID}" | tr -cd 'a-zA-Z0-9_-')
-          if [ -z "${RAW_AUTH_ID}" ]; then
-            export AUTH_ID="default"
-          else
-            export AUTH_ID="${RAW_AUTH_ID}"
-          fi
-          node -e "const p = require('./project.json'); p.defaultAuthId = process.env.AUTH_ID; require('fs').writeFileSync('./project.json', JSON.stringify(p, null, 2));"
           npx suitecloud account:savetoken \
             --account "${NS_ACCOUNT}" \
-            --authid "${AUTH_ID}" \
+            --authid "${NS_AUTH_ID}" \
             --tokenid "${NS_TOKEN_ID}" \
             --tokensecret "${NS_TOKEN_SECRET}" \
             --consumerkey "${NS_CONSUMER_KEY}" \
@@ -53,8 +55,8 @@ jobs:
 
       - name: Validate SDF Project
         if: github.event_name == 'pull_request'
-        run: npx suitecloud project:validate
+        run: npx suitecloud project:validate --authid "${NS_AUTH_ID}"
 
       - name: Deploy SDF Project
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: npx suitecloud project:deploy
+        run: npx suitecloud project:deploy --authid "${NS_AUTH_ID}"
