@@ -21,8 +21,10 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: Install Dependencies
-        run: npm ci || npm install
+      - name: Accept License and Install SuiteCloud CLI
+        run: |
+          npm config set acceptsuitecloudsdklicense true
+          npm install -g @oracle/suitecloud-cli
 
       - name: Save NetSuite Authentication Token
         env:
@@ -33,7 +35,7 @@ jobs:
           NS_CONSUMER_KEY: ${{ secrets.NS_CONSUMER_KEY }}
           NS_CONSUMER_SECRET: ${{ secrets.NS_CONSUMER_SECRET }}
         run: |
-          npx suitecloud account:savetoken \
+          suitecloud account:savetoken \
             --account "${NS_ACCOUNT}" \
             --authid "${NS_AUTH_ID}" \
             --tokenid "${NS_TOKEN_ID}" \
@@ -43,8 +45,8 @@ jobs:
 
       - name: Validate SDF Project
         if: github.event_name == 'pull_request'
-        run: npx suitecloud project:validate --authid ${{ secrets.NS_AUTH_ID }}
+        run: suitecloud project:validate --authid ${{ secrets.NS_AUTH_ID }}
 
       - name: Deploy SDF Project
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: npx suitecloud project:deploy --authid ${{ secrets.NS_AUTH_ID }}
+        run: suitecloud project:deploy --authid ${{ secrets.NS_AUTH_ID }}
