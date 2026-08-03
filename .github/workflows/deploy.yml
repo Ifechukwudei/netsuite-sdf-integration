@@ -43,8 +43,8 @@ jobs:
 
       - name: Validate SDF Project
         if: github.event_name == 'pull_request'
-        run: npx suitecloud project:validate --authid ${{ secrets.NS_AUTH_ID }}
+        run: npx suitecloud project:validate
 
       - name: Deploy SDF Project
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: npx suitecloud project:deploy --authid ${{ secrets.NS_AUTH_ID }}
+        run: npx suitecloud project:deploy
