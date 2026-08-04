@@ -32,22 +32,21 @@ jobs:
         env:
           NS_ACCOUNT: ${{ secrets.NS_ACCOUNT }}
           NS_CERTIFICATE_ID: ${{ secrets.NS_CERTIFICATE_ID }}
-          NS_PRIVATE_KEY: ${{ secrets.NS_PRIVATE_KEY }}
         run: |
           set -e
           echo "Setting up OAuth 2.0 authentication for Account: ${NS_ACCOUNT}..."
           
-          # 1. Write the private key to a temporary file securely
-          echo "${NS_PRIVATE_KEY}" > private_key.pem
+          # Use a Heredoc to safely write the private key while strictly preserving newlines
+          cat << 'EOF' > private_key.pem
+          ${{ secrets.NS_PRIVATE_KEY }}
+          EOF
           
-          # 2. Authenticate and save the session as "default"
           npx suitecloud account:setup:ci \
             --account "${NS_ACCOUNT}" \
             --authid "default" \
             --certificateid "${NS_CERTIFICATE_ID}" \
             --privatekeypath "./private_key.pem"
             
-          # 3. Clean up the private key file immediately
           rm private_key.pem
 
       - name: Validate SDF Project
