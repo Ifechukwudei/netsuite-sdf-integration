@@ -25,55 +25,50 @@ my-netsuite-sdf-project/
 
 ---
 
-## NetSuite TBA Secrets & GitHub Repository Configuration
+## NetSuite CI/CD Secrets & GitHub Repository Configuration
 
-To enable automated deployment via GitHub Actions, configure the following 6 secrets in your GitHub Repository under **Settings > Secrets and variables > Actions > New repository secret**.
+To enable automated deployment via GitHub Actions with `@oracle/suitecloud-cli` 3.x, configure the following secrets in your GitHub Repository under **Settings > Secrets and variables > Actions > New repository secret**.
 
 ### Required Secrets Summary
 
 | Secret Name | Description | Example |
 | :--- | :--- | :--- |
-| `NS_ACCOUNT` | NetSuite Account ID (Use uppercase, replace hyphen with underscore for sandbox) | `1234567` or `1234567_SB1` |
-| `NS_AUTH_ID` | Custom authentication alias for the token | `github_ci_auth` |
-| `NS_CONSUMER_KEY` | Integration Record Client ID / Consumer Key | `a1b2c3d4e5f6...` |
-| `NS_CONSUMER_SECRET` | Integration Record Client Secret / Consumer Secret | `f6e5d4c3b2a1...` |
-| `NS_TOKEN_ID` | User Access Token ID | `9876543210...` |
-| `NS_TOKEN_SECRET` | User Access Token Secret | `0123456789...` |
+| `NS_ACCOUNT` | NetSuite Account ID (Uppercase, replace hyphens with underscores for Sandbox) | `1234567` or `1234567_SB1` |
+| `NS_AUTH_ID` | Custom local alias name you choose to label this connection | `GitHubDeployer` or `default` |
+| `NS_CERTIFICATE_ID` | Certificate ID generated when setting up OAuth 2.0 Client Credentials in NetSuite | `my_cert_id_123` |
+| `NS_PRIVATE_KEY` | Plaintext content of your private RSA key (`.pem`) file matching the uploaded certificate | `-----BEGIN PRIVATE KEY-----\n...` |
 
 ---
 
-## How to Retrieve the 6 NetSuite TBA Secrets
+## What is `NS_AUTH_ID` (e.g., `GitHubDeployer`)?
 
-### Step 1: Obtain NetSuite Account ID (`NS_ACCOUNT`)
-1. Log in to NetSuite as an Administrator.
-2. Navigate to **Setup > Company > Company Information**.
-3. Locate the **Account ID** field.
-   - For Production: e.g., `1234567`
-   - For Sandbox: e.g., `1234567_SB1` (Note: Replace hyphens with underscores, e.g., `1234567-sb1` becomes `1234567_SB1`).
+`NS_AUTH_ID` (such as `GitHubDeployer`) is **not** generated or found inside NetSuite. It is simply an **arbitrary custom label/alias name** that you pick yourself to name your local authentication profile in the CLI.
 
-### Step 2: Create Integration Record (`NS_CONSUMER_KEY` & `NS_CONSUMER_SECRET`)
+---
+
+## How to Set Up NetSuite OAuth 2.0 M2M Credentials
+
+### Step 1: Generate an RSA Key Pair locally
+```bash
+openssl genrsa -out private_key.pem 2048
+openssl req -new -x509 -key private_key.pem -out public_key.pem -days 365
+```
+
+### Step 2: Create Integration Record & Upload Public Key in NetSuite
 1. Navigate to **Setup > Integration > Manage Integrations > New**.
-2. Set **Name** to `GitHub Actions SDF Deployment`.
-3. Set **State** to `Enabled`.
-4. Under **Authentication**:
-   - Check **Token-based Authentication (TBA)**.
-   - Uncheck **TBA: Authorization Code Grant**.
-   - Check **User Event and Suitelet Script Deployment** (if applicable).
-5. Click **Save**.
-6. **IMPORTANT**: Immediately copy and store the **Consumer Key** (`NS_CONSUMER_KEY`) and **Consumer Secret** (`NS_CONSUMER_SECRET`). They are displayed only once upon saving.
+2. Name: `GitHub Actions SDF Deployment`.
+3. Check **OAuth 2.0 (Client Credentials Grant)**.
+4. Set Scope to **RESTlets, SuiteAnalytics Connect, or SDF** as applicable.
+5. Under **OAuth 2.0**, click **Upload Certificate**, select your `public_key.pem`, and save.
+6. Copy the generated **Certificate ID** (`NS_CERTIFICATE_ID`).
 
-### Step 3: Create Access Token (`NS_TOKEN_ID` & `NS_TOKEN_SECRET`)
-1. Ensure the target User/Role has permissions for **SuiteApp Deployment**, **User Access Tokens**, and required custom record/script permissions.
-2. Navigate to **Setup > Users/Roles > Access Tokens > New**.
-3. Select the **Application Name** created in Step 2 (`GitHub Actions SDF Deployment`).
-4. Select the **Role** (e.g., `Administrator` or a custom DevOps role with SDF permissions).
-5. Select the **User**.
-6. Set **Token Name** (e.g., `GitHub Actions Deploy Token`).
-7. Click **Save**.
-8. **IMPORTANT**: Immediately copy and store the **Token ID** (`NS_TOKEN_ID`) and **Token Secret** (`NS_TOKEN_SECRET`). They are displayed only once.
+### Step 3: Configure GitHub Repository Secrets
+1. Go to your GitHub Repository > **Settings > Secrets and variables > Actions**.
+2. Add `NS_ACCOUNT` (e.g. `1234567` or `1234567_SB1`).
+3. Add `NS_AUTH_ID` (e.g. `GitHubDeployer`).
+4. Add `NS_CERTIFICATE_ID` (copied from Step 2).
+5. Add `NS_PRIVATE_KEY` (paste the entire text content of `private_key.pem`).
 
-### Step 4: Define AuthID (`NS_AUTH_ID`)
-- `NS_AUTH_ID` is an arbitrary unique string alias assigned to store the token credentials locally and in CI/CD (e.g., `github_ci_auth` or `prod_account`).
 
 ---
 
@@ -130,3 +125,8 @@ The workflow defined in `.github/workflows/deploy.yml` performs the following ac
 
 - **Pull Requests (PR to `main`)**: Automatically runs `suitecloud project:validate` to catch syntax or XML errors before code is merged.
 - **Push to Main**: Automatically runs `suitecloud project:deploy` to apply updates directly to your NetSuite environment.
+
+### Headless CI Storage Mode
+In Linux CI runners (where OS desktop keyring/libsecret is unavailable), Token-Based Authentication credentials saved via `suitecloud account:savetoken` use fallback encrypted file storage by defining:
+- `SUITECLOUD_FALLBACK_PASSKEY`: A 32-character alphanumeric key used by SuiteCloud CLI to encrypt and decrypt the credentials file in headless environments without requiring OS keyrings.
+

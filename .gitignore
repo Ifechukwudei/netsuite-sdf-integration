@@ -2,3 +2,4 @@ node_modules/
 .suitecloud/
 *.log
 .DS_Store
+*.pem
