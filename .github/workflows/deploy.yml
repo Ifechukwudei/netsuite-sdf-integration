@@ -23,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.18.0'
 
       - name: Install Dependencies
         run: npm ci --acceptsuitecloudsdklicense || npm install --acceptsuitecloudsdklicense
@@ -32,20 +32,20 @@ jobs:
         env:
           NS_ACCOUNT: ${{ secrets.NS_ACCOUNT }}
           NS_CERTIFICATE_ID: ${{ secrets.NS_CERTIFICATE_ID }}
+          NS_PRIVATE_KEY: ${{ secrets.NS_PRIVATE_KEY }}
         run: |
           set -e
           echo "Setting up OAuth 2.0 authentication for Account: ${NS_ACCOUNT}..."
           
-          # Use a Heredoc to safely write the private key while strictly preserving newlines
-          cat << 'EOF' > private_key.pem
-          ${{ secrets.NS_PRIVATE_KEY }}
-          EOF
+          # Safely write the key using the environment variable to preserve formatting
+          echo "$NS_PRIVATE_KEY" > private_key.pem
           
           npx suitecloud account:setup:ci \
             --account "${NS_ACCOUNT}" \
             --authid "default" \
             --certificateid "${NS_CERTIFICATE_ID}" \
-            --privatekeypath "./private_key.pem"
+            --privatekeypath "./private_key.pem" \
+            --info
             
           rm private_key.pem
 
