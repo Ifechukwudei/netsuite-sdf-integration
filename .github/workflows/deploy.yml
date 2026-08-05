@@ -40,12 +40,12 @@ jobs:
           # Safely write the key using the environment variable to preserve formatting
           echo "$NS_PRIVATE_KEY" > private_key.pem
           
+          # Executing without the unsupported --info flag
           npx suitecloud account:setup:ci \
             --account "${NS_ACCOUNT}" \
             --authid "default" \
             --certificateid "${NS_CERTIFICATE_ID}" \
-            --privatekeypath "./private_key.pem" \
-            --info
+            --privatekeypath "./private_key.pem"
             
           rm private_key.pem
 
