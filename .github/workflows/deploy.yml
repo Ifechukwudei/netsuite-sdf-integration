@@ -22,7 +22,7 @@ jobs:
 
       - name: Authenticate with NetSuite (TBA)
         run: |
-          suitecloud account:setup:ci \
+          suitecloud account:savetoken \
             --authid "github_ci_runner" \
             --account "${{ secrets.NS_ACCOUNT }}" \
             --tokenid "${{ secrets.NS_TOKEN_ID }}" \
