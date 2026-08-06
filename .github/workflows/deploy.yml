@@ -20,16 +20,18 @@ jobs:
       - name: Install SuiteCloud CLI
         run: npm install -g @oracle/suitecloud-cli --acceptsuitecloudsdklicense
 
-      - name: Authenticate with NetSuite (TBA)
+      - name: Restore Private Key
         run: |
-          suitecloud account:savetoken \
+          echo "${{ secrets.NS_PRIVATE_KEY_B64 }}" | base64 --decode > ./private.pem
+
+      - name: Authenticate with NetSuite (OAuth 2.0 M2M)
+        run: |
+          suitecloud account:setup:ci \
             --authid "github_ci_runner" \
             --account "${{ secrets.NS_ACCOUNT }}" \
-            --tokenid "${{ secrets.NS_TOKEN_ID }}" \
-            --tokensecret "${{ secrets.NS_TOKEN_SECRET }}" \
-            --consumerkey "${{ secrets.NS_CONSUMER_KEY }}" \
-            --consumersecret "${{ secrets.NS_CONSUMER_SECRET }}"
+            --certificateid "${{ secrets.NS_CERTIFICATE_ID }}" \
+            --privatekeypath ./private.pem
 
       - name: Deploy Project
         run: |
-          suitecloud project:deploy --authid "github_ci_runner"
+          suitecloud project:deploy
