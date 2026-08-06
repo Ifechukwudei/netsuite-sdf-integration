@@ -32,4 +32,4 @@ jobs:
 
       - name: Deploy Project
         run: |
-          suitecloud project:deploy --account "${{ secrets.NS_ACCOUNT }}"
+          suitecloud project:deploy --authid "github_ci_runner"
